@@ -1,0 +1,51 @@
+services:
+    nginx:
+        # https://opentelemetry.io/blog/2022/instrument-nginx/
+        # https://docs.nginx.com/nginx/admin-guide/dynamic-modules/opentelemetry/
+        build:
+            dockerfile: Dockerfile.nginx
+        volumes:
+            - ./opentelemetry_module.conf:/etc/nginx/conf.d/opentelemetry_module.conf
+        ports:
+            - '80:80'
+
+    # csharp_app:
+    #     # https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel
+    #     image: your_csharp_image
+    #     ports:
+    #         - '5000:5000'
+    #     environment:
+    #         - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    #         - OTEL_SERVICE_NAME=csharp_app
+
+    otelcol:
+        image: otel/opentelemetry-collector-contrib:latest
+        volumes:
+            - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yaml
+            - /var/run/docker.sock:/var/run/docker.sock # 使用 docker.sock 獲取 Docker 指標
+        ports:
+            - '4317:4317'
+            - '4318:4318'
+
+    prometheus:
+        image: prom/prometheus
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+            - prometheus-data:/prometheus
+        ports:
+            - '9090:9090'
+
+    grafana:
+        image: grafana/grafana
+        volumes:
+            - grafana-storage:/var/lib/grafana
+        ports:
+            - '3000:3000'
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+        depends_on:
+            - prometheus
+
+volumes:
+    prometheus-data:
+    grafana-storage:

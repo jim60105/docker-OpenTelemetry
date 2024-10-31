@@ -1,0 +1,30 @@
+# https://opentelemetry.io/docs/collector/configuration/
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  docker_stats:
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/dockerstatsreceiver
+    endpoint: 'unix:///var/run/docker.sock' # 使用 Unix socket 路徑
+
+exporters:
+  prometheus:
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
+    endpoint: '0.0.0.0:8889'
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp, docker_stats]
+      exporters: [prometheus]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: '0.0.0.0'
+                port: 8888
