@@ -42,7 +42,7 @@ services:
         ports:
             - '3000:3000'
         environment:
-            - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin # TODO: Change this admin password
         depends_on:
             - prometheus
 
