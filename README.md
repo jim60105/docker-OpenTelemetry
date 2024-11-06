@@ -1,4 +1,11 @@
 專案說明
+seq 服務：
+
+映像： 使用 datalust/seq 映像。
+資料卷： 使用 seq-data 卷來存儲 Seq 的數據。
+埠映射： 將主機的 8880 埠映射到容器的 80 埠。
+環境變數： 設定接受 EULA 為 Y。
+
 =======
 
 這個專案提供了一個使用 Docker 部署 OpenTelemetry 的範例，旨在幫助開發者參考如何建置 OpenTelemetry 的 Docker 監控方案。範例特別是針對 Nginx 伺服器的監控和追蹤。
@@ -66,6 +73,13 @@ RUN echo "load_module /opt/opentelemetry-webserver-sdk/WebServerModule/Nginx/1.2
   - **環境變數：** 設定 Grafana 管理員密碼為 `admin`。
   - **依賴關係：** 依賴於 `prometheus` 服務，確保 Prometheus 在 Grafana 之前啟動。
 
+- **seq 服務：**
+
+  - **映像：** 使用 `datalust/seq` 映像。
+  - **資料卷：** 使用 `seq-data` 卷來存儲 Seq 的數據。
+  - **埠映射：** 將主機的 `8880` 埠映射到容器的 `80` 埠。
+  - **環境變數：** 設定接受 EULA 為 `Y`。
+
 - **資料卷定義：**
 
   - **prometheus-data：** 用於存儲 Prometheus 的數據。
@@ -92,6 +106,16 @@ services:
             - '4317:4317'
             - '4318:4318'
 
+    seq:
+        image: datalust/seq:latest
+        volumes:
+            - seq-data:/data
+        ports:
+            - '8880:80'
+        environment:
+            - ACCEPT_EULA=Y
+            # - SEQ_API_CANONICALURI=https://${HOST}
+
     prometheus:
         image: prom/prometheus
         volumes:
@@ -112,6 +136,7 @@ services:
             - prometheus
 
 volumes:
+    seq-data:
     prometheus-data:
     grafana-storage:
 ```
@@ -161,14 +186,14 @@ OpenTelemetry Collector 的配置文件，定義了如何接收、處理和導�
 - **導出器 (`exporters`)：**
 
   - **`prometheus` 導出器：** 將收集到的指標數據導出，供 Prometheus 抓取。
+  - **`otlphttp` 導出器：** 將收集到的追蹤和日誌數據導出到 Seq。
 
 - **服務配置 (`service`)：**
 
-  - **管道 (`pipelines`)：** 定義了 `metrics` 管道，指定使用哪些接收器和導出器。
+  - **管道 (`pipelines`)：** 定義了 traces、logs 和 metrics 管道，指定使用哪些接收器和導出器。
   - **遙測配置：** 設置收集器自身的指標，以便 Prometheus 進行監控。
 
 ```yaml
-# https://opentelemetry.io/docs/collector/configuration/
 receivers:
   otlp:
     protocols:
@@ -184,9 +209,17 @@ exporters:
   prometheus:
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
     endpoint: '0.0.0.0:8889'
+  otlphttp:
+    endpoint: http://seq/ingest/otlp
 
 service:
   pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp]
+    logs:
+      receivers: [otlp]
+      exporters: [otlphttp]
     metrics:
       receivers: [otlp, docker_stats]
       exporters: [prometheus]
@@ -253,6 +286,7 @@ scrape_configs:
    - **Nginx：** 在瀏覽器中訪問 `http://localhost`，確認 Nginx 服務正常運行。
    - **Prometheus：** 在瀏覽器中訪問 `http://localhost:9090`，查看指標數據。
    - **Grafana：** 在瀏覽器中訪問 `http://localhost:3000`，使用用戶名 `admin` 和密碼 `admin` 登錄。
+   - **Seq：** 在瀏覽器中訪問 `http://localhost:8880`，確認 Seq 服務正常運行。
 
 5. **配置 Grafana：**
 
