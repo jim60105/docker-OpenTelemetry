@@ -14,9 +14,17 @@ exporters:
   prometheus:
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
     endpoint: '0.0.0.0:8889'
+  otlphttp:
+    endpoint: http://seq/ingest/otlp
 
 service:
   pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp]
+    logs:
+      receivers: [otlp]
+      exporters: [otlphttp]
     metrics:
       receivers: [otlp, docker_stats]
       exporters: [prometheus]

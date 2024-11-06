@@ -11,6 +11,7 @@ services:
 
     # csharp_app:
     #     # https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel
+    #     # https://github.com/serilog/serilog-sinks-opentelemetry
     #     image: your_csharp_image
     #     ports:
     #         - '5000:5000'
@@ -26,6 +27,16 @@ services:
         ports:
             - '4317:4317'
             - '4318:4318'
+
+    seq:
+        image: datalust/seq:latest
+        volumes:
+            - seq-data:/data
+        ports:
+            - '8880:80'
+        environment:
+            - ACCEPT_EULA=Y
+            # - SEQ_API_CANONICALURI=https://${HOST}
 
     prometheus:
         image: prom/prometheus
@@ -47,5 +58,6 @@ services:
             - prometheus
 
 volumes:
+    seq-data:
     prometheus-data:
     grafana-storage:
