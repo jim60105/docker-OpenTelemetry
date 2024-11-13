@@ -1,11 +1,4 @@
 專案說明
-seq 服務：
-
-映像： 使用 datalust/seq 映像。
-資料卷： 使用 seq-data 卷來存儲 Seq 的數據。
-埠映射： 將主機的 8880 埠映射到容器的 80 埠。
-環境變數： 設定接受 EULA 為 Y。
-
 =======
 
 這個專案提供了一個使用 Docker 部署 OpenTelemetry 的範例，旨在幫助開發者參考如何建置 OpenTelemetry 的 Docker 監控方案。範例特別是針對 Nginx 伺服器的監控和追蹤。
